@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "864453939477",
+    "firebase_url": "https://deansecurity-88a8b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "deansecurity-88a8b",
+    "storage_bucket": "deansecurity-88a8b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:864453939477:android:1dcf39dce30dccb5c4991c",
+        "android_client_info": {
+          "package_name": "com.example.dean_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgWALmj9ApK61KF4URJMASA69VXHqvy6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

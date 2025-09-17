@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:title="Home"
+        android:iconTint="@color/blue"
+        android:icon="@drawable/home_24dp"/>
+
+    <item
+        android:id="@+id/notifsFragment"
+        android:title="Notifications"
+        android:iconTint="@color/blue"
+        android:icon="@drawable/notifications_24dp"/>
+
+
+    <item
+        android:id="@+id/userFragment"
+        android:title="User"
+        android:iconTint="@color/blue"
+        android:icon="@drawable/account_circle_24dp"/>
+
+</menu>
