@@ -4,94 +4,73 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:orientation="vertical"
     tools:context=".UserFragment">
 
-    <LinearLayout
+    <Button
+        android:id="@+id/btnFace"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="Register Face"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
 
-        <Button
-            android:id="@+id/btnAuthorize"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/white"
-            android:text="Authorize Other User"
-            android:textColor="@color/black"
-            app:cornerRadius="10dp" />
-
-    </LinearLayout>
-
-    <LinearLayout
+    <Button
+        android:id="@+id/btnCamera"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="Register Camera"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
 
-        <Button
-            android:id="@+id/btnFace"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/white"
-            android:text="Register Face"
-            android:textColor="@color/black"
-            app:cornerRadius="10dp" />
-
-    </LinearLayout>
-
-    <LinearLayout
+    <Button
+        android:id="@+id/btnContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="Cloud Saved Media"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
 
-        <Button
-            android:id="@+id/btnCam"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/white"
-            android:text="Register Camera"
-            android:textColor="@color/black"
-            app:cornerRadius="10dp" />
-    </LinearLayout>
-
-    <LinearLayout
+    <Button
+        android:id="@+id/btnTheme"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="Switch Theme"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
 
-        <Button
-            android:id="@+id/btnTheme"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/white"
-            android:text="Switch Theme"
-            android:textColor="@color/black"
-            app:cornerRadius="10dp" />
-
-    </LinearLayout>
-    <LinearLayout
+    <Button
+        android:id="@+id/btnAbout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="About"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
 
-        <Button
-            android:id="@+id/btnAbout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/white"
-            android:text="About"
-            android:textColor="@color/black"
-            app:cornerRadius="10dp" />
-
-    </LinearLayout>
 </LinearLayout>

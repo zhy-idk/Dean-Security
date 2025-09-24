@@ -4,6 +4,11 @@ public class Face {
     private String name;
     private String image;
 
+    public Face(String name, String image) {
+        this.name = name;
+        this.image = image;
+    }
+
     public Face() {
     }
 

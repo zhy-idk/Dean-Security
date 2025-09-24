@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="4dp"
-    android:backgroundTint="@color/white"
+    android:backgroundTint="?attr/colorOnSurface"
     android:elevation="10dp"
     app:cardCornerRadius="15dp"
     app:cardUseCompatPadding="false">
@@ -30,6 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Lorem Ipsum"
+                android:textColor="?attr/colorSurface"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -37,13 +38,15 @@
                 android:id="@+id/textNotifTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="10:00 PM" />
+                android:text="10:00 PM"
+                android:textColor="?attr/colorSurface"/>
 
             <TextView
                 android:id="@+id/textNotifDate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="09/04/25" />
+                android:text="09/04/25"
+                android:textColor="?attr/colorSurface"/>
 
         </LinearLayout>
 
