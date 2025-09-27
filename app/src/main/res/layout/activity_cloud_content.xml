@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:layout_marginHorizontal="10dp"
     android:orientation="vertical"
-    tools:context=".CloudContentAcitivity">
+    tools:context=".CloudContentActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCloudContent"

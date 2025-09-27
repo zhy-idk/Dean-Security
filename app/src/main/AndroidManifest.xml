@@ -22,14 +22,20 @@
         android:theme="@style/Theme.Dean_Mobile"
         tools:targetApi="31">
         <activity
-            android:name=".CloudContentAcitivity"
+            android:name=".AboutActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CloudContentActivity"
             android:exported="false" />
         <activity
             android:name=".FaceActivity"
             android:exported="false"
             android:theme="@style/Theme.Dean_Mobile" />
         <activity
-            android:name=".MainActivity"
+            android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

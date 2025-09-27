@@ -73,4 +73,17 @@
         android:textColor="?attr/colorSurface"
         app:cornerRadius="10dp" />
 
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:backgroundTint="?attr/colorOnSurface"
+        android:elevation="5dp"
+        android:outlineProvider="background"
+        android:stateListAnimator="@null"
+        android:text="Log Out"
+        android:textColor="?attr/colorSurface"
+        app:cornerRadius="10dp" />
+
 </LinearLayout>

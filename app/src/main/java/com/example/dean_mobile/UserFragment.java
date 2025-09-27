@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
@@ -14,8 +15,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.Objects;
+
 public class UserFragment extends Fragment {
-    Button btnFace, btnCam, btnCloud, btnTheme, btnAbout;
+    Button btnFace, btnCam, btnCloud, btnTheme, btnAbout, btnLogout;
 
     public UserFragment() {
         // Required empty public constructor
@@ -48,51 +53,53 @@ public class UserFragment extends Fragment {
         btnCloud = view.findViewById(R.id.btnContent);
         btnTheme = view.findViewById(R.id.btnTheme);
         btnAbout = view.findViewById(R.id.btnAbout);
+        btnLogout = view.findViewById(R.id.btnLogout);
 
         boolean isDarkTheme = isDarkTheme();
         btnTheme.setText(isDarkTheme ? "Change to Light Theme" : "Change to Dark Theme");
 
-        btnFace.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), FaceActivity.class);
-                startActivity(intent);
+        btnFace.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), FaceActivity.class);
+            startActivity(intent);
+        });
+
+        btnCam.setOnClickListener(v -> {
+            // Handle button click
+
+        });
+
+        btnCloud.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), CloudContentActivity.class);
+            startActivity(intent);
+        });
+
+        btnTheme.setOnClickListener(v -> {
+            boolean currentIsDark = isDarkTheme();
+            if (currentIsDark) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             }
         });
 
-        btnCam.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Handle button click
-            }
+        btnAbout.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), AboutActivity.class);
+            startActivity(intent);
         });
 
-        btnCloud.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), CloudContentAcitivity.class);
-                startActivity(intent);
-            }
-        });
-
-        btnTheme.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean currentIsDark = isDarkTheme();
-                if (currentIsDark) {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                } else {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                }
-                // The activity will be recreated, so no need to manually update the button text here
-            }
-        });
-
-        btnAbout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Handle button click
-            }
+        btnLogout.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setMessage("Are you sure you want to continue?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        FirebaseAuth.getInstance().signOut();
+                        Intent intent = new Intent(getActivity(), LoginActivity.class);
+                        startActivity(intent);
+                        requireActivity().finish();
+                    })
+                    .setNegativeButton("No", (dialog, which) -> {
+                        // Handle No
+                    })
+                    .show();
         });
     }
 }

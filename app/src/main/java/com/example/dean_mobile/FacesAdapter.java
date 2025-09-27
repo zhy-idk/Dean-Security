@@ -15,17 +15,36 @@ import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 
-
 public class FacesAdapter extends FirestoreRecyclerAdapter<Face, FacesAdapter.ViewHolder> {
+
+    // Interface for handling item clicks
+    public interface OnItemClickListener {
+        void onItemClick(Face face, int position, String documentId);
+    }
+
+    private OnItemClickListener listener;
 
     public FacesAdapter(@NonNull FirestoreRecyclerOptions<Face> options) {
         super(options);
+    }
+
+    // Method to set the click listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
     @Override
     protected void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull Face model) {
         holder.txtName.setText(model.getName());
         Glide.with(holder.imgFace.getContext()).load(model.getImage()).into(holder.imgFace);
+
+        // Set click listener for the entire item
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                String documentId = getSnapshots().getSnapshot(position).getId();
+                listener.onItemClick(model, position, documentId);
+            }
+        });
     }
 
     @NonNull
@@ -38,6 +57,7 @@ public class FacesAdapter extends FirestoreRecyclerAdapter<Face, FacesAdapter.Vi
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView txtName;
         ImageView imgFace;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             txtName = itemView.findViewById(R.id.txtName);

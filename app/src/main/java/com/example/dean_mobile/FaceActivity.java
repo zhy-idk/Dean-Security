@@ -1,11 +1,15 @@
 package com.example.dean_mobile;
 
+import static java.security.AccessController.getContext;
+
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -20,6 +24,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.storage.FirebaseStorage;
@@ -84,7 +89,7 @@ public class FaceActivity extends AppCompatActivity {
 
         rvUsers.setLayoutManager(new GridLayoutManager(this, 2));
 
-        Query query = db.collection("faces");
+        Query query = db.collection("faces").orderBy("name", Query.Direction.ASCENDING);
 
         FirestoreRecyclerOptions<Face> options =
                 new FirestoreRecyclerOptions.Builder<Face>()
@@ -92,6 +97,43 @@ public class FaceActivity extends AppCompatActivity {
                         .build();
 
         adapter = new FacesAdapter(options);
+        adapter.setOnItemClickListener(new FacesAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Face face, int position, String documentId) {
+                // Create EditText for name input
+                EditText editText = new EditText(FaceActivity.this);
+                editText.setText(face.getName()); // Set current name
+                editText.setHint("Enter name");
+                editText.setInputType(InputType.TYPE_CLASS_TEXT);
+                editText.setSingleLine(true);
+
+                // Add some padding to the EditText
+                int padding = (int) (16 * getResources().getDisplayMetrics().density); // 16dp in pixels
+                editText.setPadding(padding, padding, padding, padding);
+
+                new AlertDialog.Builder(FaceActivity.this)
+                        .setTitle("Edit Face")
+                        .setMessage("Enter new name or delete this face:")
+                        .setView(editText)
+                        .setPositiveButton("Save", (dialog, which) -> {
+                            String newName = editText.getText().toString().trim();
+                            if (!newName.isEmpty()) {
+                                // Update the name in Firestore using documentId
+                                updateFaceName(documentId, newName);
+                            } else {
+                                Toast.makeText(FaceActivity.this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("Delete", (dialog, which) -> {
+                            // Show delete confirmation using documentId
+                            showDeleteConfirmation(face, documentId);
+                        })
+                        .setNeutralButton("Cancel", (dialog, which) -> {
+                            // Dialog will close automatically
+                        })
+                        .show();
+            }
+        });
         rvUsers.setAdapter(adapter);
     }
 
@@ -105,6 +147,137 @@ public class FaceActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         adapter.stopListening();
+    }
+
+    // Method to update face name in Firestore
+    private void updateFaceName(String documentId, String newName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // First, check if the new name already exists
+        db.collection("faces")
+                .whereEqualTo("name", newName)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        // Name already exists
+                        Toast.makeText(this, "Name '" + newName + "' already exists. Please choose a different name.", Toast.LENGTH_LONG).show();
+                    } else {
+                        // Name doesn't exist, proceed with update
+                        proceedWithNameUpdate(documentId, newName);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error checking name availability: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // Method to proceed with name update after validation
+    private void proceedWithNameUpdate(String documentId, String newName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+
+        // First get the current face data
+        db.collection("faces").document(documentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Face currentFace = documentSnapshot.toObject(Face.class);
+                        String oldName = currentFace.getName();
+                        String currentImageUrl = currentFace.getImage();
+
+                        // Show loading
+                        Toast.makeText(this, "Updating name and file...", Toast.LENGTH_SHORT).show();
+
+                        // Create reference to old file
+                        StorageReference oldFileRef = storage.getReferenceFromUrl(currentImageUrl);
+
+                        // Download the image data first
+                        oldFileRef.getBytes(Long.MAX_VALUE)
+                                .addOnSuccessListener(imageData -> {
+                                    // Create reference for new file with new name
+                                    StorageReference newFileRef = storage.getReference()
+                                            .child("faces/" + newName + ".jpg");
+
+                                    // Upload with new name
+                                    newFileRef.putBytes(imageData)
+                                            .addOnSuccessListener(uploadTask -> {
+                                                // Get new download URL
+                                                newFileRef.getDownloadUrl()
+                                                        .addOnSuccessListener(newDownloadUri -> {
+                                                            // Update Firestore with new name and image URL
+                                                            db.collection("faces").document(documentId)
+                                                                    .update(
+                                                                            "name", newName,
+                                                                            "image", newDownloadUri.toString()
+                                                                    )
+                                                                    .addOnSuccessListener(aVoid -> {
+                                                                        // Delete old file after successful update
+                                                                        deleteOldFile(oldFileRef, oldName);
+                                                                        Toast.makeText(this, "Name and file updated successfully", Toast.LENGTH_SHORT).show();
+                                                                    })
+                                                                    .addOnFailureListener(e -> {
+                                                                        Toast.makeText(this, "Error updating document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                        // Clean up new file if document update failed
+                                                                        newFileRef.delete();
+                                                                    });
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(this, "Error getting new download URL: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                            newFileRef.delete(); // Clean up
+                                                        });
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(this, "Error uploading new file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            });
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Error downloading current image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    } else {
+                        Toast.makeText(this, "Document not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error retrieving current data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // Helper method to delete old file
+    private void deleteOldFile(StorageReference oldFileRef, String oldName) {
+        oldFileRef.delete()
+                .addOnSuccessListener(aVoid -> {
+                    // Old file deleted successfully (silent success)
+                })
+                .addOnFailureListener(e -> {
+                    // Log error but don't show to user since main operation succeeded
+                    // You could use Log.w("FaceActivity", "Failed to delete old file: " + e.getMessage());
+                });
+    }
+
+    // Method to show delete confirmation
+    private void showDeleteConfirmation(Face face, String documentId) {
+        new AlertDialog.Builder(FaceActivity.this)
+                .setTitle("Delete Face")
+                .setMessage("Are you sure you want to delete \"" + face.getName() + "\"?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteFace(documentId);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // Method to delete face from Firestore
+    private void deleteFace(String documentId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("faces").document(documentId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Face deleted successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error deleting face: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void showImagePickerDialog() {
