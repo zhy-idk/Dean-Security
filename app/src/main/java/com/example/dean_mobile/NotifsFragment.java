@@ -53,7 +53,7 @@ public class NotifsFragment extends Fragment {
         rvNotifs = view.findViewById(R.id.rvNotifs);
         rvNotifs.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        Query query = FirebaseDatabase.getInstance().getReference().child("notifs").child("test");
+        Query query = FirebaseDatabase.getInstance().getReference().child("notifs");
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

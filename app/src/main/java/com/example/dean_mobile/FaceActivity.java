@@ -81,6 +81,7 @@ public class FaceActivity extends AppCompatActivity {
         etName = findViewById(R.id.etName);
         btnUpload = findViewById(R.id.btnUpload);
         rvUsers = findViewById(R.id.rvUsers);
+        rvUsers.setItemAnimator(null);
 
         btnImage.setOnClickListener(v -> showImagePickerDialog());
 

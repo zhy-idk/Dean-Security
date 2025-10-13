@@ -1,6 +1,7 @@
 package com.example.dean_mobile;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
@@ -10,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +22,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.Objects;
 
 public class UserFragment extends Fragment {
-    Button btnFace, btnCam, btnCloud, btnTheme, btnAbout, btnLogout;
+    Button btnFace, btnCam, btnCloud, btnTheme, btnAutoUpload, btnAbout, btnLogout;
+    SharedPreferences sharedPreferences;
 
     public UserFragment() {
         // Required empty public constructor
@@ -34,6 +37,7 @@ public class UserFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sharedPreferences = requireActivity().getSharedPreferences("AutoUpload", 0);
     }
 
     @Override
@@ -41,6 +45,16 @@ public class UserFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_user, container, false);
+    }
+
+    public void checkAutoUpload() {
+        boolean autoUpload = sharedPreferences.getBoolean("autoUpload", false);
+        btnAutoUpload.setText(autoUpload ? "Auto Upload: Yes" : "Auto Upload: No");
+    }
+
+    public void checkTheme() {
+        boolean isDarkTheme = isDarkTheme();
+        btnTheme.setText(isDarkTheme ? "Change to Light Theme" : "Change to Dark Theme");
     }
 
     @Override
@@ -52,11 +66,12 @@ public class UserFragment extends Fragment {
         btnCam = view.findViewById(R.id.btnCamera);
         btnCloud = view.findViewById(R.id.btnContent);
         btnTheme = view.findViewById(R.id.btnTheme);
+        btnAutoUpload = view.findViewById(R.id.btnAutoUpload);
         btnAbout = view.findViewById(R.id.btnAbout);
         btnLogout = view.findViewById(R.id.btnLogout);
 
-        boolean isDarkTheme = isDarkTheme();
-        btnTheme.setText(isDarkTheme ? "Change to Light Theme" : "Change to Dark Theme");
+        checkTheme();
+        checkAutoUpload();
 
         btnFace.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), FaceActivity.class);
@@ -64,7 +79,8 @@ public class UserFragment extends Fragment {
         });
 
         btnCam.setOnClickListener(v -> {
-            // Handle button click
+            Intent intent = new Intent(getActivity(), RegCamActivity.class);
+            startActivity(intent);
 
         });
 
@@ -80,6 +96,14 @@ public class UserFragment extends Fragment {
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             }
+        });
+
+        btnAutoUpload.setOnClickListener(v -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("autoUpload", !sharedPreferences.getBoolean("autoUpload", false));
+            editor.apply();
+
+            checkAutoUpload();
         });
 
         btnAbout.setOnClickListener(v -> {

@@ -3,11 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingHorizontal="10dp"
     tools:context=".HomeFragment">
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,19 +32,18 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <androidx.cardview.widget.CardView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCameras"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/textView12"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardElevation="4dp"
-        app:cardUseCompatPadding="true">
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:adjustViewBounds="true"
-            app:srcCompat="@drawable/footage" />
-    </androidx.cardview.widget.CardView>
+        android:gravity="center"
+        android:paddingVertical="2dp"
+        android:text="Switching camera while recording will reflect in the footage." />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -54,9 +52,9 @@
         android:layout_marginVertical="5dp"
         android:orientation="horizontal">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCapture"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="3dp"
             android:layout_weight="1"
@@ -73,10 +71,10 @@
             app:iconPadding="0dp"
             app:iconTint="?attr/colorSurface" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRecord"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="3dp"
             android:layout_weight="1"
             android:autoSizeTextType="uniform"
@@ -92,33 +90,14 @@
             app:iconPadding="0dp"
             app:iconTint="?attr/colorSurface" />
 
-        <Button
-            android:id="@+id/btnAlarm"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginHorizontal="3dp"
-            android:layout_weight="1"
-            android:autoSizeTextType="uniform"
-            android:backgroundTint="?attr/colorOnSurface"
-            android:elevation="3dp"
-            android:outlineProvider="background"
-            android:stateListAnimator="@null"
-            android:text="Alarm"
-            android:textColor="?attr/colorSurface"
-            android:textSize="12sp"
-            app:cornerRadius="5dp"
-            app:icon="@drawable/siren_24dp"
-            app:iconPadding="0dp"
-            app:iconTint="?attr/colorSurface" />
-
     </LinearLayout>
 
     <Spinner
         android:id="@+id/spnView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/colorSurface"
-        android:entries="@array/display_array" />
+        android:entries="@array/display_array"
+        android:textColor="?attr/colorSurface" />
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
