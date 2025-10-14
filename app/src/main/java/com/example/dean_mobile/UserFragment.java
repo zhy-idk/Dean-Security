@@ -22,7 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.Objects;
 
 public class UserFragment extends Fragment {
-    Button btnFace, btnCam, btnCloud, btnTheme, btnAutoUpload, btnAbout, btnLogout;
+    Button btnFace, btnCam, btnCloud, btnTheme, btnAutoUpload, btnAbout, btnLogout, btnPushTest;
     SharedPreferences sharedPreferences;
 
     public UserFragment() {
@@ -69,6 +69,7 @@ public class UserFragment extends Fragment {
         btnAutoUpload = view.findViewById(R.id.btnAutoUpload);
         btnAbout = view.findViewById(R.id.btnAbout);
         btnLogout = view.findViewById(R.id.btnLogout);
+        btnPushTest = view.findViewById(R.id.btnPushTest);
 
         checkTheme();
         checkAutoUpload();
@@ -124,6 +125,11 @@ public class UserFragment extends Fragment {
                         // Handle No
                     })
                     .show();
+        });
+
+        btnPushTest.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), PushNotifActivity.class);
+            startActivity(intent);
         });
     }
 }

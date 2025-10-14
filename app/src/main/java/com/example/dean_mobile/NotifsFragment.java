@@ -51,9 +51,12 @@ public class NotifsFragment extends Fragment {
 
         // Initialization
         rvNotifs = view.findViewById(R.id.rvNotifs);
-        rvNotifs.setLayoutManager(new LinearLayoutManager(getContext()));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager.setReverseLayout(true);
+        layoutManager.setStackFromEnd(true);
+        rvNotifs.setLayoutManager(layoutManager);
 
-        Query query = FirebaseDatabase.getInstance().getReference().child("notifs");
+        Query query = FirebaseDatabase.getInstance().getReference().child("notif_alert").orderByChild("date");
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

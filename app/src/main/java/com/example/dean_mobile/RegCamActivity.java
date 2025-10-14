@@ -1,12 +1,17 @@
 package com.example.dean_mobile;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -22,7 +27,7 @@ import com.google.firebase.database.Query;
 public class RegCamActivity extends AppCompatActivity {
 
     EditText etCamLink;
-    Button btnUpload;
+    Button btnUpload, btnGet;
     RecyclerView rvCamList;
     CamlistAdapter adapter;
     DatabaseReference cameraRef;
@@ -42,6 +47,7 @@ public class RegCamActivity extends AppCompatActivity {
         // Initialize views
         etCamLink = findViewById(R.id.etCamLink);
         btnUpload = findViewById(R.id.btnUpload);
+        btnGet = findViewById(R.id.btnGet);
         rvCamList = findViewById(R.id.rvCamList);
 
         rvCamList.setItemAnimator(null);
@@ -65,6 +71,38 @@ public class RegCamActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 uploadCameraLink();
+            }
+        });
+
+        btnGet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Query querycam = FirebaseDatabase.getInstance().getReference().child("ip");
+                querycam.get().addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        GetCam alert = snapshot.getValue(GetCam.class);
+                        if (alert != null) {
+                            String message = alert.getPublic_();
+                            Log.d("Firebase Data", "Public message: " + message);
+                            if (!message.isEmpty()){
+                                AlertDialog.Builder builder = new AlertDialog.Builder(RegCamActivity.this);
+                                builder.setTitle("Detected Cam")
+                                        .setMessage(message)  // Set the message from RegAlert
+                                        .setPositiveButton("Copy", (dialog, which) -> {
+                                            // Update the Firebase database to set the message to ""
+                                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                            ClipData clip = ClipData.newPlainText("Copied Message", message);
+                                            clipboard.setPrimaryClip(clip);
+                                            Toast.makeText(RegCamActivity.this, "Message copied to clipboard!", Toast.LENGTH_SHORT).show();
+                                            FirebaseDatabase.getInstance().getReference().child("ip").setValue(new GetCam("", ""));
+                                            dialog.dismiss();
+                                        })
+                                        .show();
+                            } else {
+                                Toast.makeText(RegCamActivity.this, "No cam detected", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }});
             }
         });
     }

@@ -20,7 +20,7 @@ public class FacesAdapter extends FirebaseRecyclerAdapter<Face, FacesAdapter.Vie
 
     // Interface for handling item clicks
     public interface OnItemClickListener {
-        void onItemClick(Face face, int position, String key);
+        void onItemClick(Face face, int position);  // No need for key now
     }
 
     private OnItemClickListener listener;
@@ -36,7 +36,7 @@ public class FacesAdapter extends FirebaseRecyclerAdapter<Face, FacesAdapter.Vie
     @Override
     protected void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull Face model) {
         holder.txtName.setText(model.getName());
-        Log.d("FacesAdapter", "Image: " + model.getImage()); // Log the image")
+        Log.d("FacesAdapter", "Image: " + model.getImage()); // Log the image)
 
         // Decode Base64 image string
         if (model.getImage() != null && !model.getImage().isEmpty()) {
@@ -45,17 +45,16 @@ public class FacesAdapter extends FirebaseRecyclerAdapter<Face, FacesAdapter.Vie
                 Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
                 holder.imgFace.setImageBitmap(bitmap);
             } catch (Exception e) {
-                holder.imgFace.setImageResource(R.drawable.placeholder); // fallback
+                holder.imgFace.setImageResource(R.drawable.placeholder); // fallback image
             }
         } else {
             holder.imgFace.setImageResource(R.drawable.placeholder);
         }
 
-        // Handle item click
+        // Handle item click (no key needed anymore)
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
-                String key = getRef(position).getKey(); // Get the Realtime Database key
-                listener.onItemClick(model, position, key);
+                listener.onItemClick(model, position);  // Only pass the model and position
             }
         });
     }
