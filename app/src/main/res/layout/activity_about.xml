@@ -14,7 +14,7 @@
         android:id="@+id/textView9"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="App Name"
+        android:text="IntruSight"
         android:textSize="24sp" />
 
     <TextView
@@ -22,8 +22,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Wow such cool app! :o"
-        android:textSize="24sp" />
+        android:text="IntruSight is a smart surveillance app that lets users stream, record, and manage live camera feeds with cloud storage integration for easy access and playback."
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/textView11"

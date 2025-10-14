@@ -1,6 +1,8 @@
 package com.example.dean_mobile;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,19 +13,23 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
+import android.os.FileObserver;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -32,26 +38,37 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
     ImageView imageView;
     Button btnCapture, btnRecord;
-    RecyclerView rvCameras;
+    RecyclerView rvCameras, rvLocal;
     CameraAdapter adapter;
+    Spinner spnView;
+    LinearLayout loadingOverlay;
+
+    LocalImageAdapter localImageAdapter;
+    LocalVideoAdapter localVideoAdapter;
 
     private Surface inputSurface;
     private int selectedCameraPosition = 0; // auto-updated when centered
@@ -66,6 +83,9 @@ public class HomeFragment extends Fragment {
     private Handler recordingHandler;
     private Runnable recordingRunnable;
     private String currentVideoPath;
+    private FileObserver fileObserver;
+
+    LinearSnapHelper snapHelper;
 
     private static final int FRAME_RATE = 30;
 
@@ -91,18 +111,116 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        imageView = view.findViewById(R.id.imageView);
         btnCapture = view.findViewById(R.id.btnCapture);
         btnRecord = view.findViewById(R.id.btnRecord);
         rvCameras = view.findViewById(R.id.rvCameras);
         rvCameras.setItemAnimator(null);
+        rvLocal = view.findViewById(R.id.rvLocal);
+        rvLocal.setItemAnimator(null);
+        spnView = view.findViewById(R.id.spnView);
+
+        loadingOverlay = view.findViewById(R.id.loadingOverlay);
+
 
         setupRecyclerView();
-
+        setupLocalMediaView();
 
         btnCapture.setOnClickListener(v -> captureSelectedCamera());
         btnRecord.setOnClickListener(v -> toggleRecording());
     }
+
+    private void setupLocalMediaView() {
+        rvLocal.setLayoutManager(new GridLayoutManager(getContext(), 3));
+
+        spnView.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                String selected = parent.getItemAtPosition(position).toString();
+                if (selected.equals("Captured Images")) {
+                    loadLocalImages();
+                    observeFolder(Environment.DIRECTORY_PICTURES + "/IntruSight", true);
+                } else if (selected.equals("Recorded Videos")) {
+                    loadLocalVideos();
+                    observeFolder(Environment.DIRECTORY_MOVIES + "/IntruSight", false);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        // Default to images
+        loadLocalImages();
+        observeFolder(Environment.DIRECTORY_PICTURES + "/IntruSight", true);
+
+        // ✅ Add this observer block here:
+        requireContext().getContentResolver().registerContentObserver(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                true,
+                new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        super.onChange(selfChange);
+                        loadLocalImages(); // or loadLocalVideos() depending on your current spinner selection
+                    }
+                }
+        );
+    }
+
+
+
+    private void loadLocalImages() {
+        File picturesDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "IntruSight");
+
+        if (!picturesDir.exists())
+            picturesDir.mkdirs();
+
+        File[] imgFiles = picturesDir.listFiles((dir, name) ->
+                (name.endsWith(".jpg") || name.endsWith(".jpeg")) && !name.contains(".trashed")
+        );
+
+        if (imgFiles == null)
+            imgFiles = new File[0];
+
+        Collections.reverse(Arrays.asList(imgFiles));
+
+        if (localImageAdapter == null) {
+            localImageAdapter = new LocalImageAdapter(getContext(), Arrays.asList(imgFiles));
+            rvLocal.setAdapter(localImageAdapter);
+        } else {
+            localImageAdapter = new LocalImageAdapter(getContext(), Arrays.asList(imgFiles));
+            rvLocal.setAdapter(localImageAdapter);
+            localImageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void loadLocalVideos() {
+        File videosDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "IntruSight");
+
+        if (!videosDir.exists())
+            videosDir.mkdirs();
+
+        File[] files = videosDir.listFiles((dir, name) ->
+                name.endsWith(".mp4") && !name.contains(".trashed")
+        );
+
+        if (files == null)
+            files = new File[0];
+
+        Collections.reverse(Arrays.asList(files));
+
+        if (localVideoAdapter == null) {
+            localVideoAdapter = new LocalVideoAdapter(getContext(), Arrays.asList(files));
+            rvLocal.setAdapter(localVideoAdapter);
+        } else {
+            localVideoAdapter = new LocalVideoAdapter(getContext(), Arrays.asList(files));
+            rvLocal.setAdapter(localVideoAdapter);
+            localVideoAdapter.notifyDataSetChanged();
+        }
+    }
+
+
+
 
     private void setupRecyclerView() {
         LinearLayoutManager layoutManager =
@@ -118,10 +236,22 @@ public class HomeFragment extends Fragment {
 
         adapter = new CameraAdapter(options);
         rvCameras.setAdapter(adapter);
+        adapter.startListening();
 
         // Snap to center when scrolling
-        LinearSnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(rvCameras);
+
+        rvCameras.postDelayed(() -> {
+            View centerView = snapHelper.findSnapView(layoutManager);
+            if (centerView != null) {
+                int position = layoutManager.getPosition(centerView);
+                Camera currentCamera = adapter.getItem(position);
+                if (currentCamera != null) {
+                    checkCameraReady(currentCamera.getLink());
+                }
+            }
+        }, 500);
 
         // Detect centered camera when scrolling stops
         rvCameras.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -140,7 +270,38 @@ public class HomeFragment extends Fragment {
                 }
             }
         });
+
     }
+
+    private void checkCameraReady(String link) {
+        loadingOverlay.setVisibility(View.VISIBLE);
+
+        new Thread(() -> {
+            boolean isReachable = false;
+            try {
+                java.net.URL url = new java.net.URL(link);
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setRequestMethod("GET");
+                int responseCode = connection.getResponseCode();
+                isReachable = (responseCode == 200);
+                connection.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            boolean finalIsReachable = isReachable;
+            requireActivity().runOnUiThread(() -> {
+                if (finalIsReachable) {
+                    loadingOverlay.setVisibility(View.GONE);
+                } else {
+                    loadingOverlay.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
+    }
+
 
     private WebView getWebViewAtPosition(int position) {
         RecyclerView.ViewHolder holder = rvCameras.findViewHolderForAdapterPosition(position);
@@ -156,10 +317,6 @@ public class HomeFragment extends Fragment {
 
     private void captureSelectedCamera() {
         WebView webView = getWebViewAtPosition(selectedCameraPosition);
-        if (webView == null) {
-            Toast.makeText(getContext(), "Scroll until the camera is centered", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         try {
             Bitmap bitmap = Bitmap.createBitmap(webView.getWidth(), webView.getHeight(), Bitmap.Config.ARGB_8888);
@@ -175,18 +332,35 @@ public class HomeFragment extends Fragment {
         try {
             String fileName = "capture_" + System.currentTimeMillis() + ".jpg";
             ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/IntruSight");
             values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-            values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/FaceRecognition");
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+
 
             Uri uri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (uri != null) {
                 OutputStream out = requireContext().getContentResolver().openOutputStream(uri);
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                 out.close();
+
+                values.clear();
+                values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                requireContext().getContentResolver().update(uri, values, null, null);
+
                 Toast.makeText(getContext(), "Image saved!", Toast.LENGTH_SHORT).show();
+
             }
             bitmap.recycle();
+            localImageAdapter.notifyDataSetChanged();
+
+            if (isAutoUploadEnabled(getContext())) {
+                File picturesDir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES), "IntruSight");
+                File savedFile = new File(picturesDir, fileName);
+                uploadToFirebase(savedFile);
+            }
+
         } catch (Exception e) {
             Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -203,10 +377,6 @@ public class HomeFragment extends Fragment {
 
     private void startRecording() {
         WebView webView = getWebViewAtPosition(selectedCameraPosition);
-        if (webView == null) {
-            Toast.makeText(getContext(), "Scroll until the camera is centered", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         try {
             int width = webView.getWidth();
@@ -365,9 +535,11 @@ public class HomeFragment extends Fragment {
             if (!videoFile.exists()) return;
 
             ContentValues values = new ContentValues();
+            values.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/IntruSight");
             values.put(MediaStore.Video.Media.DISPLAY_NAME, videoFile.getName());
             values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-            values.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/FaceRecognition");
+            values.put(MediaStore.Video.Media.IS_PENDING, 1);
+
 
             Uri uri = getContext().getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
             if (uri != null) {
@@ -379,11 +551,74 @@ public class HomeFragment extends Fragment {
                 in.close();
                 out.close();
                 videoFile.delete();
+
+                values.clear();
+                values.put(MediaStore.Video.Media.IS_PENDING, 0);
+                requireContext().getContentResolver().update(uri, values, null, null);
+            }
+            localVideoAdapter.notifyDataSetChanged();
+
+            if (isAutoUploadEnabled(getContext())) {
+                File videosDir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_MOVIES), "IntruSight");
+                File savedFile = new File(videosDir, new File(videoPath).getName());
+                uploadToFirebase(savedFile);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
+    private void observeFolder(String relativePath, boolean isImageFolder) {
+        if (fileObserver != null) {
+            fileObserver.stopWatching();
+        }
+
+        File dir = new File(Environment.getExternalStoragePublicDirectory(relativePath).getAbsolutePath());
+        fileObserver = new FileObserver(dir.getAbsolutePath(),
+                FileObserver.CREATE | FileObserver.MOVED_TO | FileObserver.DELETE | FileObserver.MOVED_FROM) {
+            @Override
+            public void onEvent(int event, @Nullable String path) {
+                if (path != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        if (isImageFolder) {
+                            loadLocalImages();
+                        } else {
+                            loadLocalVideos();
+                        }
+                    });
+                }
+            }
+        };
+        fileObserver.startWatching();
+    }
+
+
+    private boolean isAutoUploadEnabled(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("AutoUpload", Context.MODE_PRIVATE);
+        return prefs.getBoolean("autoUpload", false);
+    }
+
+    private void uploadToFirebase(File file) {
+        if (file == null || !file.exists()) return;
+        Log.d("UPLOAD", "AutoUpload enabled: ");
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+
+        Uri fileUri = Uri.fromFile(file);
+        StorageReference fileRef = storageRef.child("media" + "/" + file.getName());
+
+        fileRef.putFile(fileUri)
+                .addOnSuccessListener(taskSnapshot ->
+                        Toast.makeText(getContext(), "Uploaded: " + file.getName(), Toast.LENGTH_SHORT).show()
+                )
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+    }
+
 
     @Override
     public void onStart() {

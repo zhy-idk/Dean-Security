@@ -2,11 +2,13 @@ package com.example.dean_mobile;
 
 public class Face {
     private String name;
-    private String image;
+    private String img;
+    private String registration;
 
-    public Face(String name, String image) {
+    public Face(String name, String image, String registration) {
         this.name = name;
-        this.image = image;
+        this.img = image;
+        this.registration = registration;
     }
 
     public Face() {
@@ -21,10 +23,18 @@ public class Face {
     }
 
     public String getImage() {
-        return image;
+        return img;
     }
 
     public void setImage(String image) {
-        this.image = image;
+        this.img = image;
+    }
+
+    public String getRegistration() {
+        return registration;
+    }
+
+    public void setRegistration(String registration) {
+        this.registration = registration;
     }
 }

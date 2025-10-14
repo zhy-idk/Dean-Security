@@ -77,7 +77,7 @@ public class RegCamActivity extends AppCompatActivity {
         }
 
         // Create new camera object
-        Camera camera = new Camera(link);
+        Camera camera = new Camera(link, 0, 0);
 
         // Push to Firebase
         cameraRef.push().setValue(camera)

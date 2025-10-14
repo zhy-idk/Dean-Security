@@ -1,5 +1,9 @@
 package com.example.dean_mobile;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,26 +13,22 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
-import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 
-public class FacesAdapter extends FirestoreRecyclerAdapter<Face, FacesAdapter.ViewHolder> {
+public class FacesAdapter extends FirebaseRecyclerAdapter<Face, FacesAdapter.ViewHolder> {
 
     // Interface for handling item clicks
     public interface OnItemClickListener {
-        void onItemClick(Face face, int position, String documentId);
+        void onItemClick(Face face, int position, String key);
     }
 
     private OnItemClickListener listener;
 
-    public FacesAdapter(@NonNull FirestoreRecyclerOptions<Face> options) {
+    public FacesAdapter(@NonNull FirebaseRecyclerOptions<Face> options) {
         super(options);
     }
 
-    // Method to set the click listener
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
@@ -36,13 +36,26 @@ public class FacesAdapter extends FirestoreRecyclerAdapter<Face, FacesAdapter.Vi
     @Override
     protected void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull Face model) {
         holder.txtName.setText(model.getName());
-        Glide.with(holder.imgFace.getContext()).load(model.getImage()).into(holder.imgFace);
+        Log.d("FacesAdapter", "Image: " + model.getImage()); // Log the image")
 
-        // Set click listener for the entire item
+        // Decode Base64 image string
+        if (model.getImage() != null && !model.getImage().isEmpty()) {
+            try {
+                byte[] decodedBytes = Base64.decode(model.getImage(), Base64.DEFAULT);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                holder.imgFace.setImageBitmap(bitmap);
+            } catch (Exception e) {
+                holder.imgFace.setImageResource(R.drawable.placeholder); // fallback
+            }
+        } else {
+            holder.imgFace.setImageResource(R.drawable.placeholder);
+        }
+
+        // Handle item click
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
-                String documentId = getSnapshots().getSnapshot(position).getId();
-                listener.onItemClick(model, position, documentId);
+                String key = getRef(position).getKey(); // Get the Realtime Database key
+                listener.onItemClick(model, position, key);
             }
         });
     }
@@ -50,7 +63,8 @@ public class FacesAdapter extends FirestoreRecyclerAdapter<Face, FacesAdapter.Vi
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.face_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.face_item, parent, false);
         return new ViewHolder(view);
     }
 
